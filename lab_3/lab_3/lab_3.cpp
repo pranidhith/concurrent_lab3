@@ -2,43 +2,40 @@
 //
 
 #include "stdafx.h"
-
-//answer =  18  24  30
-//			54  69  84 
-//			86  114 138
 #include <iostream>
+#include <cstdlib>
+#include <ctime>
+#include <omp.h>
+
 using namespace std;
 
 int** create2DArray(int size);
 
-int** multiply(int **numArray1, int **numArray2);
+int** multiply(int size, int **numArray1, int **numArray2);
+
+int** fillValuesRandomly(int **Array2D, int size);
 
 int main()
 {
+	srand((int)time(0));
+	//int n = atoi(argv[1]);
+
 	int multi;
+
 	int count = 1;
-	int size = 3;
+	//int size = 3;
 
-	int** numArray1 = create2DArray(size);
-	int** numArray2 = create2DArray(size);
+	for (int i = 200; i < 2001; i = i + 200) {
+		cout<< "size: " << i;
+		int size = i;
 
-	for (int i = 0; i < size; i++) {
-		for (int j = 0; j < size; i++) {
-			numArray1[i][j] = count;
-			numArray2[i][j] = count;
-			count++;
-		}
-	}
-	//int numArray1[3][3] = { { 1,2,3 } ,{ 4,5,6 } ,{ 7,8,9 } };
-	//int numArray2[3][3] = { { 7,8,9 } ,{ 4,5,6 } ,{ 1,2,3 } };
+		int** inital2DArray1 = create2DArray(size);
+		int** inital2DArray2 = create2DArray(size);
 
-	int** my2DArray = multiply(numArray1, numArray2);
+		int** valuesAdded2DArray1 = fillValuesRandomly(inital2DArray1, size);
+		int** valuesAdded2DArray2 = fillValuesRandomly(inital2DArray2, size);
 
-	for (int i = 0; i < 3; i++) {
-		for (int j = 0; j < 3; j++) {
-			cout << my2DArray[i][j] << " ";
-		}
-		cout << "\n";
+		int** my2DArray = multiply(size, valuesAdded2DArray1, valuesAdded2DArray2);
 	}
 
 	cin >> multi;
@@ -47,40 +44,50 @@ int main()
 
 int** create2DArray(int size)
 {
-	int** array2D = 0;
+	int** array2D;
+
 	array2D = new int*[size];
 
-	for (int h = 0; h < 3; h++)
+	for (int h = 0; h < size; h++)
 	{
 		array2D[h] = new int[size];
-
-		for (int w = 0; w < size; w++)
-		{
-			// fill in some initial values
-			// (filling in zeros would be more logic, but this is just for the example)
-			array2D[h][w] = 0;
-		}
 	}
 
 	return array2D;
 }
 
-int** multiply(int **numArray1, int **numArray2) 
+int** fillValuesRandomly(int **Array2D, int size)
 {
-	//int(*rPointer);
-	int** resultArray = create2DArray(3);
+	for (int i = 0; i < size; i++) {
+		for (int j = 0; j < size; j++) {
+			double r = rand();
+			Array2D[i][j] = r;
+		}
+	}
+	return Array2D;
+}
 
+int** multiply(int size, int **numArray1, int **numArray2) 
+{
+	int** resultArray = create2DArray(size);
 	int sum;
 
-	for (int i = 0; i < 3; i++) {
-		for (int j = 0; j < 3; j++) {
+	double start = omp_get_wtime();
+
+	for (int i = 0; i < size; i++) {
+		for (int j = 0; j < size; j++) {
 			int sum = 0;
-			for (int k = 0; k < 3; k++) {
+			for (int k = 0; k < size; k++) {
 				sum += numArray1[i][k] * numArray2[k][j];
 			}
 			resultArray[i][j] = sum;
 		}
 	}
+
+	double end = omp_get_wtime();
+	double totalTime = end - start;
+
+	cout << endl << "Time for Sequential Multiplication: " << totalTime << endl;
 
 	return resultArray;
 }
