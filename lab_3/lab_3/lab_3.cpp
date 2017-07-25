@@ -18,15 +18,27 @@ double multiplySerial(int size, double **numArray1, double **numArray2);
 
 double multiplyParallel(int size, double **numArray1, double **numArray2);
 
+double optimizedParallel(int size, double **numArray1, double **numArray2);
+
+double** getTranspose(double **Array2D, int size);
+
 int main()
 {
 	srand((double)time(0));
 	//int n = atoi(argv[1]);
 
+	int size = 3;
+
+	double** inital2DArray1 = create2DArray(size);
+	double** inital2DArray2 = create2DArray(size);
+
+	double** valuesAdded2DArray1 = fillValuesRandomly(inital2DArray1, size);
+	double** valuesAdded2DArray2 = fillValuesRandomly(inital2DArray2, size);
+
 	int multi;
 
 	//int count = 1;
-	//int size = 3;
+
 	ofstream outputFile;
 	outputFile.open("results.txt");
 
@@ -45,6 +57,7 @@ int main()
 
 		outputFile << size << " : " << seqTime << endl;
 	}
+	cout << "...................... " << endl;
 
 	outputFile <<"\n"<< "Parallel run Results: " << endl;
 	for (int i = 200; i < 2001; i = i + 200) {
@@ -54,6 +67,7 @@ int main()
 		double** inital2DArray1 = create2DArray(size);
 		double** inital2DArray2 = create2DArray(size);
 
+
 		double** valuesAdded2DArray1 = fillValuesRandomly(inital2DArray1, size);
 		double** valuesAdded2DArray2 = fillValuesRandomly(inital2DArray2, size);
 
@@ -61,6 +75,25 @@ int main()
 
 		outputFile << size << " : " << parTime << endl;
 	}
+	cout << "...................... " << endl;
+
+	outputFile << "\n" << "Parallel run optimised Results: " << endl;
+	for (int i = 200; i < 2001; i = i + 200) {
+		cout << "size: " << i;
+		int size = i;
+
+		double** inital2DArray1 = create2DArray(size);
+		double** inital2DArray2 = create2DArray(size);
+
+
+		double** valuesAdded2DArray1 = fillValuesRandomly(inital2DArray1, size);
+		double** valuesAdded2DArray2 = fillValuesRandomly(inital2DArray2, size);
+
+		double parTime = optimizedParallel(size, valuesAdded2DArray1, valuesAdded2DArray2);
+
+		outputFile << size << " : " << parTime << endl;
+	}
+	cout << "...................... " << endl;
 
 	outputFile.close();
 
@@ -91,6 +124,20 @@ double** fillValuesRandomly(double **Array2D, int size)
 		}
 	}
 	return Array2D;
+}
+
+double** getTranspose(double **Array2D, int size)
+{
+	double** transposedtArray = create2DArray(size);
+
+	for (int i = 0; i < size; i++) {
+		for (int j = 0; j < size; j++) {
+		
+			transposedtArray[i][j] = Array2D[j][i];
+		}
+	}
+	return transposedtArray;
+
 }
 
 double multiplySerial(int size, double **numArray1, double **numArray2)
@@ -126,11 +173,9 @@ double multiplyParallel(int size, double **numArray1, double **numArray2)
 
 	double start = omp_get_wtime();
 
-	//#pragma omp parallel shared ( numArray1, numArray2, resultArray, size ) private ( i, j, k, sum )
-
 	#pragma omp parallel for
 	for (int i = 0; i < size; i++) {
-		//#pragma omp parallel for
+		#pragma omp parallel for
 		for (int j = 0; j < size; j++) {
 			double sum = 0;
 			for (int k = 0; k < size; k++) {
@@ -144,6 +189,35 @@ double multiplyParallel(int size, double **numArray1, double **numArray2)
 	double totalTime = end - start;
 
 	cout << endl << "Time for Parallel Multiplication: " << totalTime << endl;
+
+	return totalTime;
+	//return resultArray;
+}
+
+double optimizedParallel(int size, double **numArray1, double **numArray2)
+{
+	double** resultArray = create2DArray(size);
+	double sum;
+	double** transposedArray = getTranspose(numArray2, size);
+
+	double start = omp_get_wtime();
+
+	#pragma omp parallel for
+	for (int i = 0; i < size; i++) {
+		#pragma omp parallel for
+		for (int j = 0; j < size; j++) {
+			double sum = 0;
+			for (int k = 0; k < size; k++) {
+				sum += numArray1[i][k] * transposedArray[j][k];
+			}
+			resultArray[i][j] = sum;
+		}
+	}
+
+	double end = omp_get_wtime();
+	double totalTime = end - start;
+
+	cout << endl << "Time for Parallel Optimized Multiplication: " << totalTime << endl;
 
 	return totalTime;
 	//return resultArray;
